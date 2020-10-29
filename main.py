@@ -147,6 +147,19 @@ class MainWindow(QMainWindow):
         self.logger.info('Exception %s %s' % (str(tp), str(value)))
         self.logger.debug('Exception', exc_info=True)
 
+    def exec_init_script(self, folder=None, file_name=init_script):
+        if folder is None:
+            folder = self.folderName
+        full_name = os.path.join(str(folder), file_name)
+        try:
+            exec(open(full_name).read(), globals(), locals())
+            self.logger.debug('Init script %s executed' % full_name)
+        except FileNotFoundError:
+            pass
+        except:
+            self.logger.info('Init script %s error.', full_name)
+            self.logger.debug('Exception info', exc_info=True)
+
     def timer_handler(self):
         t0 = time.time()
         self.elapsed = time.time() - t0
