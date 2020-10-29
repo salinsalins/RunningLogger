@@ -1,0 +1,32 @@
+#print('test.py start')
+self = locals()['self']
+#self.paramsManual = [{} for i in range(29)]
+self.paramsManual[0] =  {'smooth':50, 'offset': 0.0, 'l1': 213.0, 'R': 200000.0, 'l2': 200.0, 'd2': 0.5, 'd1': 0.4, 'energy': 32000.0}
+self.paramsManual[1] =  {'smooth':50, 'x0':-24.0,'ndh':-20.0, 'offset':0.0,'range':(4000,6500),'zero':((1,0,4500),(2,4500,6500),(1,6500,8300),(2,8300,9999))}
+self.paramsManual[2] =  {'smooth':50, 'x0':-20.0,'ndh':-20.0,'zero':((1,0,4500),(2,4500,6500),(1,6500,8300),(2,8300,9999))}
+self.paramsManual[3] =  {'smooth':50, 'x0':-18.0,'ndh':-10.0}
+self.paramsManual[4] =  {'smooth':50, 'x0':-16.0,'ndh':-10.0}
+self.paramsManual[5] =  {'smooth':50, 'x0':-14.0,'ndh':-10.0}
+self.paramsManual[6] =  {'smooth':50, 'x0':-12.0,'ndh':-10.0}
+self.paramsManual[7] =  {'smooth':50, 'x0':-10.0,'ndh':-10.0}
+self.paramsManual[8] =  {'smooth':50, 'x0':-8.0,'ndh':-10.0}
+self.paramsManual[9] =  {'smooth':50, 'x0':-6.0,'ndh':0.0}
+self.paramsManual[10] = {'smooth':50, 'x0':-4.0,'ndh':0.0}
+self.paramsManual[11] = {'smooth':50, 'x0':-2.0,'ndh':0.0}
+self.paramsManual[12] = {'smooth':50, 'x0':0.0,'ndh':0.0}
+self.paramsManual[13] = {'smooth':50, 'x0':2.0,'ndh':0.0}
+self.paramsManual[14] = {'smooth':50, 'x0':4.0,'ndh':0.0}
+self.paramsManual[15] = {'smooth':50, 'x0':6.0,'ndh':10.0}
+self.paramsManual[16] = {'smooth':50, 'x0':8.0,'ndh':10.0}
+self.paramsManual[17] = {'smooth':50, 'x0':10.0,'ndh':10.0}
+self.paramsManual[18] = {'smooth':50, 'x0':12.0,'ndh':10.0}
+self.paramsManual[19] = {'smooth':50, 'x0':14.0,'ndh':10.0}
+self.paramsManual[20] = {'smooth':50, 'x0':16.0,'ndh':10.0}
+self.paramsManual[21] = {'smooth':50, 'x0':18.0,'ndh':20.0}
+self.paramsManual[22] = {'smooth':50, 'x0':20.0,'ndh':20.0}
+self.paramsManual[23] = {'smooth':50, 'x0':22.0,'ndh':20.0}
+self.paramsManual[24] = {'smooth':50, 'x0':24.0,'ndh':20.0}
+self.paramsManual[25] = {'smooth':50, 'x0':26.0,'ndh':20.0}
+self.paramsManual[26] = {'smooth':50, 'x0':28.0,'ndh':20.0}
+self.paramsManual[28] = {'smooth':50, 'x0':28.0,'ndh':20.0}
+#print('test.py end')
