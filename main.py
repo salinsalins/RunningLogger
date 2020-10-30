@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
         # Defile callback task and start timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
-        self.timer.start(1.0)
+        self.timer.start(0.5)
 
     def on_quit(self):
         # save global settings
@@ -160,9 +160,56 @@ class MainWindow(QMainWindow):
             self.logger.info('Init script %s error.', full_name)
             self.logger.debug('Exception info', exc_info=True)
 
+    def plot(self, *args, **kwargs):
+        axes = self.mplWidget.canvas.ax
+        axes.plot(*args, **kwargs)
+        # zoplot()
+        # xlim = axes.get_xlim()
+        # axes.plot(xlim, [0.0, 0.0], color='k')
+        # axes.set_xlim(xlim)
+        axes.grid(True)
+        #axes.legend(loc='best')
+        self.mplWidget.canvas.draw()
+
+    def clear(self, force=False):
+        if force or self.checkBox.isChecked():
+            # clear the axes
+            self.erase()
+
+    def erase(self):
+        self.mplWidget.canvas.ax.clear()
+        self.mplWidget.canvas.draw()
+
+
     def timer_handler(self):
-        t0 = time.time()
-        self.elapsed = time.time() - t0
+        n = 10000
+        t1 = time.time()
+        if not hasattr(self, 't0'):
+            self.t0 = time.time()
+            self.y = np.zeros(n)
+            self.index = 0
+        t = (time.time() - self.t0) / 100.0 * 2.0 * np.pi
+        self.y[self.index] = np.sin(t)
+        self.index += 1
+        n1 = self.index - 1000
+        n2 = self.index
+        if self.index >= n:
+            self.index = 0
+        if n1 < 0:
+            nd =np.concatenate([np.arange(n+n1, n), np.arange(0, n2)])
+        else:
+            nd = np.arange(n1, n2)
+        axes = self.mplWidget.canvas.ax
+        axes.clear()
+        axes.plot(self.y[nd])
+        k = 100
+        for i in range(k):
+            axes.plot(self.y[nd]*2.0*i/(k-1))
+            if time.time() - t1 > 0.4:
+                print(i)
+                break
+        self.mplWidget.canvas.draw()
+
 
 
 if __name__ == '__main__':
