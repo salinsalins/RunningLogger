@@ -153,9 +153,9 @@ class MainWindow(QMainWindow):
         full_name = os.path.join(str(folder), file_name)
         try:
             exec(open(full_name).read(), globals(), locals())
-            self.logger.debug('Init script %s executed' % full_name)
+            self.logger.debug('Init script %s executed', full_name)
         except FileNotFoundError:
-            pass
+            self.logger.debug('Init script %s not found', full_name)
         except:
             self.logger.info('Init script %s error.', full_name)
             self.logger.debug('Exception info', exc_info=True)
@@ -180,8 +180,9 @@ class MainWindow(QMainWindow):
         self.mplWidget.canvas.ax.clear()
         self.mplWidget.canvas.draw()
 
-
     def timer_handler(self):
+        if not self.pushButton.isChecked():
+            return
         n = 10000
         t1 = time.time()
         if not hasattr(self, 't0'):
