@@ -200,9 +200,11 @@ class MainWindow(QMainWindow):
             self.x = np.zeros(n)
             self.index = 0
         t = (time.time() - self.t0) / 100.0 * 2.0 * np.pi
-        self.x[self.index] = t
-        self.y[self.index] = np.sin(t)
-        nd = np.concatenate([np.arange(self.index+1, n), np.arange(0, self.index+1)])
+        self.x[:-1] = self.x[1:]
+        self.y[:-1] = self.y[1:]
+        self.x[-1] = t
+        self.y[-1] = np.sin(t)
+        # nd = np.concatenate([np.arange(self.index+1, n), np.arange(0, self.index+1)])
         self.index += 1
         if self.index >= n:
             self.index = 0
@@ -212,9 +214,9 @@ class MainWindow(QMainWindow):
         axes = self.axes[self.ai]
         axes.clear()
         k = 100
-        yy = self.y[nd] * 2.0 / (k - 1)
+        yy = self.y * 2.0 / (k - 1)
         for i in range(k):
-            axes.plot(self.x[nd], yy * i)
+            axes.plot(self.x, yy * i)
             if time.time() - t1 > (self.timer_period * 0.5):
                 print(i)
                 break
