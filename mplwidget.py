@@ -31,7 +31,7 @@ class MplCanvas(FigureCanvas):
     def __init__(self):
         # setup Matplotlib Figure and Axis
         self.fig = Figure(tight_layout=True)
-        self.ax = self.fig.add_subplot(211)
+        self.ax = self.fig.add_subplot(111)
         # initialization of the super
         super().__init__(self.fig)
         # we define the widget as expandable

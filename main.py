@@ -51,7 +51,7 @@ class MainWindow(QMainWindow):
         # self.pushButton_2.clicked.connect(self.selectFolder)
         # self.pushButton_4.clicked.connect(self.processFolder)
         # self.pushButton_6.clicked.connect(self.pushPlotButton)
-        # self.pushButton_7.clicked.connect(self.erasePicture)
+        self.pushButton_7.clicked.connect(self.erase)
         # self.comboBox_2.currentIndexChanged.connect(self.selectionChanged)
         # menu actions connection
         # self.actionOpen.triggered.connect(self.selectFolder)
@@ -134,6 +134,11 @@ class MainWindow(QMainWindow):
             if 'main_window' in self.config:
                 self.resize(QSize(self.config['main_window']['size'][0], self.config['main_window']['size'][1]))
                 self.move(QPoint(self.config['main_window']['position'][0], self.config['main_window']['position'][1]))
+            if 'subplots' in self.config:
+                fig = self.mplWidget.canvas.fig
+                for a in fig.get_axes():
+                    fig.delaxes(a)
+                self.mplWidget.canvas.ax = fig.add_subplot(int(self.config['subplots']))
             #
             self.logger.info('Configuration restored from %s' % full_file_name)
             return True
