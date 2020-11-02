@@ -65,6 +65,8 @@ class MainWindow(QMainWindow):
         self.config = {}
         self.axes = []
         self.ai = 0
+        self.timer_period = 1.0
+        self.draw_points = 1000
         # configure logging
         self.logger = logging.getLogger(PROG_NAME + PROG_VERSION)
         self.logger.setLevel(logging.DEBUG)
@@ -91,7 +93,7 @@ class MainWindow(QMainWindow):
         # Defile callback task and start timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
-        self.timer.start(0.5)
+        self.timer.start(self.timer_period)
 
     def on_quit(self):
         # save global settings
@@ -101,8 +103,8 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, 'About', PROG_NAME + ' Version ' + PROG_VERSION +
                                 '\nBeam emittance calculation program.', QMessageBox.Ok)
 
-    def save_settings(self, folder='', fileName=settings_file_name):
-        full_name = os.path.join(str(folder), fileName)
+    def save_settings(self, folder='', file_name=settings_file_name):
+        full_name = os.path.join(str(folder), file_name)
         try:
             # save window size and position
             p = self.pos()
@@ -137,6 +139,10 @@ class MainWindow(QMainWindow):
                     ax = fig.add_subplot(self.config['subplots']["rows"], self.config['subplots']["columns"], i+1)
                     self.axes.append(ax)
                     self.mplWidget.canvas.ax = ax
+            if 'timer_period' in self.config:
+                self.timer_period = self.config['timer_period']
+            if 'draw_points' in self.config:
+                self.draw_points = self.config['draw_points']
             #
             self.logger.info('Configuration restored from %s' % full_file_name)
             return True
@@ -171,7 +177,7 @@ class MainWindow(QMainWindow):
         # axes.plot(xlim, [0.0, 0.0], color='k')
         # axes.set_xlim(xlim)
         axes.grid(True)
-        #axes.legend(loc='best')
+        # axes.legend(loc='best')
         self.mplWidget.canvas.draw()
 
     def clear(self, force=False):
@@ -186,37 +192,33 @@ class MainWindow(QMainWindow):
     def timer_handler(self):
         if not self.pushButton.isChecked():
             return
-        n = 10000
+        n = self.draw_points
         t1 = time.time()
         if not hasattr(self, 't0'):
             self.t0 = time.time()
             self.y = np.zeros(n)
+            self.x = np.zeros(n)
             self.index = 0
         t = (time.time() - self.t0) / 100.0 * 2.0 * np.pi
+        self.x[self.index] = t
         self.y[self.index] = np.sin(t)
+        nd = np.concatenate([np.arange(self.index+1, n), np.arange(0, self.index+1)])
         self.index += 1
-        n1 = self.index - 1000
-        n2 = self.index
         if self.index >= n:
             self.index = 0
-        if n1 < 0:
-            nd =np.concatenate([np.arange(n+n1, n), np.arange(0, n2)])
-        else:
-            nd = np.arange(n1, n2)
         self.ai += 1
         if self.ai >= len(self.axes):
             self.ai = 0
         axes = self.axes[self.ai]
         axes.clear()
-        k = 1000
+        k = 100
         yy = self.y[nd] * 2.0 / (k - 1)
         for i in range(k):
-            axes.plot(yy * i)
-            if time.time() - t1 > 0.1:
+            axes.plot(self.x[nd], yy * i)
+            if time.time() - t1 > (self.timer_period * 0.5):
                 print(i)
                 break
         self.mplWidget.canvas.draw()
-
 
 
 if __name__ == '__main__':
