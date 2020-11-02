@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import qApp
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5 import uic
+from PyQt5 import uic, QtGui
 from PyQt5.QtCore import QPoint, QSize
 from PyQt5.QtCore import QTimer
 
@@ -27,13 +27,13 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
 
-prog_name = 'RunningLogger'
-prog_version = ' 0.1'
-settings_file_name = prog_name + '.json'
-init_script = prog_name + '_init.py'
-ui_file = prog_name + '.ui'
-log_file = prog_name + '.log'
-data_file = prog_name + '.dat'
+PROG_NAME = 'RunningLogger'
+PROG_VERSION = ' 0.1'
+settings_file_name = PROG_NAME + '.json'
+init_script = PROG_NAME + '_init.py'
+ui_file = PROG_NAME + '.ui'
+log_file = PROG_NAME + '.log'
+data_file = PROG_NAME + '.dat'
 
 
 class MainWindow(QMainWindow):
@@ -63,16 +63,10 @@ class MainWindow(QMainWindow):
         # variables definition
         self.prog_dir = os.getcwd()
         self.config = {}
-        # self.next_clicked_flag = False
-        # self.folderName = ''
-        # self.fleNames = []
-        # self.nx = 0
-        # self.data = None
-        # self.scanVoltage = None
-        # self.paramsAuto = None
-        # self.paramsManual = {}
+        self.axes = []
+        self.ai = 0
         # configure logging
-        self.logger = logging.getLogger(prog_name + prog_version)
+        self.logger = logging.getLogger(PROG_NAME + PROG_VERSION)
         self.logger.setLevel(logging.DEBUG)
         self.f_str = '%(asctime)s,%(msecs)3d %(levelname)-7s %(filename)s %(funcName)s(%(lineno)s) %(message)s'
         self.log_formatter = logging.Formatter(self.f_str, datefmt='%H:%M:%S')
@@ -82,13 +76,13 @@ class MainWindow(QMainWindow):
         # self.file_handler = logging.FileHandler(log_file)
         # self.file_handler.setFormatter(self.log_formatter)
         # self.logger.addHandler(self.file_handler)
-        # Default main window parameters
-        # self.resize(QSize(480, 640))                 # size
-        # self.move(QPoint(50, 50))                    # position
-        # self.setWindowTitle(APPLICATION_NAME)        # title
-        # self.setWindowIcon(QtGui.QIcon('icon.png'))  # icon
         # welcome message
-        self.logger.info(prog_name + prog_version + ' started')
+        self.logger.info(PROG_NAME + PROG_VERSION + ' started')
+        # default main window parameters
+        self.resize(QSize(480, 640))                 # size
+        self.move(QPoint(50, 50))                    # position
+        self.setWindowTitle(PROG_NAME)        # title
+        self.setWindowIcon(QtGui.QIcon('icon.png'))  # icon
         # restore global settings from default location
         self.restore_settings()
         # connect mouse button press event
@@ -104,7 +98,7 @@ class MainWindow(QMainWindow):
         self.save_settings()
 
     def show_about(self):
-        QMessageBox.information(self, 'About', prog_name + ' Version ' + prog_version +
+        QMessageBox.information(self, 'About', PROG_NAME + ' Version ' + PROG_VERSION +
                                 '\nBeam emittance calculation program.', QMessageBox.Ok)
 
     def save_settings(self, folder='', fileName=settings_file_name):
@@ -138,7 +132,11 @@ class MainWindow(QMainWindow):
                 fig = self.mplWidget.canvas.fig
                 for a in fig.get_axes():
                     fig.delaxes(a)
-                self.mplWidget.canvas.ax = fig.add_subplot(int(self.config['subplots']))
+                self.axes = []
+                for i in range(self.config['subplots']["rows"]):
+                    ax = fig.add_subplot(self.config['subplots']["rows"], self.config['subplots']["columns"], i+1)
+                    self.axes.append(ax)
+                    self.mplWidget.canvas.ax = ax
             #
             self.logger.info('Configuration restored from %s' % full_file_name)
             return True
@@ -205,13 +203,16 @@ class MainWindow(QMainWindow):
             nd =np.concatenate([np.arange(n+n1, n), np.arange(0, n2)])
         else:
             nd = np.arange(n1, n2)
-        axes = self.mplWidget.canvas.ax
+        self.ai += 1
+        if self.ai >= len(self.axes):
+            self.ai = 0
+        axes = self.axes[self.ai]
         axes.clear()
-        axes.plot(self.y[nd])
-        k = 100
+        k = 1000
+        yy = self.y[nd] * 2.0 / (k - 1)
         for i in range(k):
-            axes.plot(self.y[nd]*2.0*i/(k-1))
-            if time.time() - t1 > 0.4:
+            axes.plot(yy * i)
+            if time.time() - t1 > 0.1:
                 print(i)
                 break
         self.mplWidget.canvas.draw()
