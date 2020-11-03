@@ -11,14 +11,15 @@ import time
 import json
 import logging
 
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import qApp
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5 import uic, QtGui
-from PyQt5.QtCore import QPoint, QSize
+from PyQt5.QtWidgets import QCheckBox
+from PyQt5 import uic, QtGui, QtCore
+from PyQt5.QtCore import QPoint, QSize, Qt
 from PyQt5.QtCore import QTimer
 
 import numpy as np
@@ -26,6 +27,8 @@ from scipy.integrate import trapz
 from scipy.interpolate import interp1d
 from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
+
+from TangoAttribute import TangoAttribute
 
 PROG_NAME = 'RunningLogger'
 PROG_VERSION = ' 0.1'
@@ -47,18 +50,10 @@ class MainWindow(QMainWindow):
         # turn plot interactive mod on
         plt.ion()
         # connect the signals with the slots
-        # self.pushButton.clicked.connect(self.next_clicked)
-        # self.pushButton_2.clicked.connect(self.selectFolder)
-        # self.pushButton_4.clicked.connect(self.processFolder)
-        # self.pushButton_6.clicked.connect(self.pushPlotButton)
         self.pushButton_7.clicked.connect(self.erase)
         # self.comboBox_2.currentIndexChanged.connect(self.selectionChanged)
         # menu actions connection
-        # self.actionOpen.triggered.connect(self.selectFolder)
-        # self.actionQuit.triggered.connect(qApp.quit)
-        # self.actionPlot.triggered.connect(self.showPlot)
-        # self.actionLog.triggered.connect(self.showLog)
-        # self.actionParameters.triggered.connect(self.showParameters)
+        self.actionQuit.triggered.connect(qApp.quit)
         self.actionAbout.triggered.connect(self.show_about)
         # variables definition
         self.prog_dir = os.getcwd()
@@ -67,6 +62,7 @@ class MainWindow(QMainWindow):
         self.ai = 0
         self.timer_period = 1.0
         self.draw_points = 1000
+        self.attributes = {}
         # configure logging
         self.logger = logging.getLogger(PROG_NAME + PROG_VERSION)
         self.logger.setLevel(logging.DEBUG)
@@ -75,11 +71,10 @@ class MainWindow(QMainWindow):
         self.console_handler = logging.StreamHandler()
         self.console_handler.setFormatter(self.log_formatter)
         self.logger.addHandler(self.console_handler)
+        # logging to file
         # self.file_handler = logging.FileHandler(log_file)
         # self.file_handler.setFormatter(self.log_formatter)
         # self.logger.addHandler(self.file_handler)
-        # welcome message
-        self.logger.info(PROG_NAME + PROG_VERSION + ' started')
         # default main window parameters
         self.resize(QSize(480, 640))                 # size
         self.move(QPoint(50, 50))                    # position
@@ -90,10 +85,16 @@ class MainWindow(QMainWindow):
         # connect mouse button press event
         # self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.onclick)
         # self.mplWidget.canvas.mpl_disconnect(cid)
+        # additional decorations
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.resizeRowsToContents()
+        self.tableWidget.setColumnWidth(0, 25)
         # Defile callback task and start timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
         self.timer.start(self.timer_period)
+        # welcome message
+        self.logger.info(PROG_NAME + PROG_VERSION + ' started')
 
     def on_quit(self):
         # save global settings
@@ -143,6 +144,45 @@ class MainWindow(QMainWindow):
                 self.timer_period = self.config['timer_period']
             if 'draw_points' in self.config:
                 self.draw_points = self.config['draw_points']
+            if 'attributes' in self.config:
+                count = 0
+                table = self.tableWidget
+                for attr in self.config['attributes']:
+                    name = attr['name']
+                    self.attributes[name] = {}
+                    self.attributes[name]['config'] = attr
+                    tattr = TangoAttribute(name=name,
+                                           use_history=attr['use_history'],
+                                           readonly=attr['readonly']
+                                           )
+                    self.attributes[name]['tango'] = tattr
+                    if tattr.device_proxy is not None:
+                        count += 1
+                    row = table.rowCount()
+                    self.attributes[name]['row'] = row
+                    table.insertRow(row)
+                    #cb = QCheckBox()
+                    #cb.setFixedWidth(50)
+                    #cb.setLayout(QVBoxLayout())
+                    pWidget = QWidget()
+                    pCheckbox = QCheckBox()
+                    pLayout = QVBoxLayout()
+                    pLayout.addWidget(pCheckbox)
+                    pLayout.setAlignment(Qt.AlignCenter)
+                    pLayout.setContentsMargins(0, 0, 0, 0)
+                    pWidget.setLayout(pLayout)
+                    self.attributes[name]['cb'] = pCheckbox
+                    pCheckbox.setCheckState(QtCore.Qt.Checked)
+                    table.setCellWidget(row, 0, pWidget)
+                    try:
+                        aname = tattr.config.name
+                    except:
+                        aname = tattr.attribute_name
+                    table.setItem(row, 1, QTableWidgetItem(aname))
+                if count == 0:
+                    self.logger.warning('No valid tango attributes defined')
+            else:
+                self.logger.warning('No attributes defined')
             #
             self.logger.info('Configuration restored from %s' % full_file_name)
             return True
@@ -199,26 +239,50 @@ class MainWindow(QMainWindow):
             self.y = np.zeros(n)
             self.x = np.zeros(n)
             self.index = 0
-        t = (time.time() - self.t0) / 100.0 * 2.0 * np.pi
+        t = time.time() - self.t0
+        tt = t / 50.0 * 2.0 * np.pi
         self.x[:-1] = self.x[1:]
         self.y[:-1] = self.y[1:]
         self.x[-1] = t
-        self.y[-1] = np.sin(t)
+        self.y[-1] = np.sin(tt)
         # nd = np.concatenate([np.arange(self.index+1, n), np.arange(0, self.index+1)])
-        self.index += 1
-        if self.index >= n:
-            self.index = 0
-        self.ai += 1
-        if self.ai >= len(self.axes):
-            self.ai = 0
+        # self.index += 1
+        # if self.index >= n:
+        #     self.index = 0
+        # self.ai += 1
+        # if self.ai >= len(self.axes):
+        #     self.ai = 0
+        self.ai = 0
         axes = self.axes[self.ai]
         axes.clear()
-        k = 100
-        yy = self.y * 2.0 / (k - 1)
-        for i in range(k):
-            axes.plot(self.x, yy * i)
+        # k = 5
+        # yy = self.y * 2.0 / (k - 1)
+        # for i in range(k):
+        #     axes.plot(self.x, yy * i)
+        #     if time.time() - t1 > (self.timer_period * 0.5):
+        #         print(i)
+        #         break
+        for an in self.attributes:
+            ai = self.attributes[an]
+            if 'x' not in ai:
+                ai['x'] = np.zeros(n)
+                ai['y'] = np.zeros(n)
+            ai['x'][:-1] = ai['x'][1:]
+            ai['y'][:-1] = ai['y'][1:]
+            tattr = ai['tango']
+            try:
+                tattr.read()
+                y = tattr.value()
+                x = tattr.time()
+            except:
+                y = self.y[-1] + len(an)
+                x = self.x[-1]
+            ai['x'][-1] = x
+            ai['y'][-1] = y
+            if ai['cb'].isChecked():
+                axes.plot(ai['x'], ai['y'])
             if time.time() - t1 > (self.timer_period * 0.5):
-                print(i)
+                print('attr', an)
                 break
         self.mplWidget.canvas.draw()
 

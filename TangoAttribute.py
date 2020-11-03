@@ -324,6 +324,11 @@ class TangoAttribute:
             return self.read_result.value
         return self.read_result.value * self.coeff
 
+    def time(self):
+        if self.read_result is None:
+            return None
+        return self.read_result.time.totime()
+
     def write_value(self, value):
         if self.is_boolean():
             return bool(value)
