@@ -53,12 +53,12 @@
          </column>
          <column>
           <property name="text">
-           <string>Name</string>
+           <string/>
           </property>
          </column>
          <column>
           <property name="text">
-           <string/>
+           <string>Name</string>
           </property>
          </column>
         </widget>

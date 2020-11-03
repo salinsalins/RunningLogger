@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import QFileDialog
 from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtWidgets import QPushButton
 from PyQt5 import uic, QtGui, QtCore
 from PyQt5.QtCore import QPoint, QSize, Qt
 from PyQt5.QtCore import QTimer
@@ -89,6 +90,7 @@ class MainWindow(QMainWindow):
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.setColumnWidth(0, 25)
+        self.tableWidget.setColumnWidth(1, 25)
         # Defile callback task and start timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
@@ -174,11 +176,17 @@ class MainWindow(QMainWindow):
                     self.attributes[name]['cb'] = pCheckbox
                     pCheckbox.setCheckState(QtCore.Qt.Checked)
                     table.setCellWidget(row, 0, pWidget)
+                    pb = QPushButton()
+                    pb.cli
+                    self.attributes[name]['status'] = pb
+                    pb.setFixedWidth(25)
+                    pb.setStyleSheet('background-color: rgb(0, 255, 0);')
+                    table.setCellWidget(row, 1, pb)
                     try:
                         aname = tattr.config.name
                     except:
                         aname = tattr.attribute_name
-                    table.setItem(row, 1, QTableWidgetItem(aname))
+                    table.setItem(row, 2, QTableWidgetItem(aname))
                 if count == 0:
                     self.logger.warning('No valid tango attributes defined')
             else:
@@ -274,11 +282,17 @@ class MainWindow(QMainWindow):
                 tattr.read()
                 y = tattr.value()
                 x = tattr.time()
+                quality = tattr.is_valid()
             except:
                 y = self.y[-1] + len(an)
                 x = self.x[-1]
+                quality = False
             ai['x'][-1] = x
             ai['y'][-1] = y
+            if quality:
+                ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
+            else:
+                ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
             if ai['cb'].isChecked():
                 axes.plot(ai['x'], ai['y'])
             if time.time() - t1 > (self.timer_period * 0.5):

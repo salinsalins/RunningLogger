@@ -324,6 +324,16 @@ class TangoAttribute:
             return self.read_result.value
         return self.read_result.value * self.coeff
 
+    def quality(self):
+        if self.read_result is None:
+            return None
+        return self.read_result.quality
+
+    def is_valid(self):
+        if self.read_result is None:
+            return False
+        return self.read_result.quality == tango.AttrQuality.ATTR_VALID
+
     def time(self):
         if self.read_result is None:
             return None
