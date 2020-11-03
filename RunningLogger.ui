@@ -257,7 +257,7 @@
          <enum>QFrame::NoFrame</enum>
         </property>
         <property name="text">
-         <string>Scan Voltage Channll</string>
+         <string>Scan Voltage Channell</string>
         </property>
        </widget>
       </item>
@@ -362,7 +362,7 @@
      <x>0</x>
      <y>0</y>
      <width>1003</width>
-     <height>23</height>
+     <height>34</height>
     </rect>
    </property>
    <property name="font">

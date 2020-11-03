@@ -155,7 +155,7 @@ class MainWindow(QMainWindow):
                     self.attributes[name]['config'] = attr
                     tattr = TangoAttribute(name=name,
                                            use_history=attr['use_history'],
-                                           readonly=attr['readonly']
+                                           readonly=True
                                            )
                     self.attributes[name]['tango'] = tattr
                     if tattr.device_proxy is not None:
@@ -177,7 +177,7 @@ class MainWindow(QMainWindow):
                     pCheckbox.setCheckState(QtCore.Qt.Checked)
                     table.setCellWidget(row, 0, pWidget)
                     pb = QPushButton()
-                    pb.cli
+                    #pb.cli
                     self.attributes[name]['status'] = pb
                     pb.setFixedWidth(25)
                     pb.setStyleSheet('background-color: rgb(0, 255, 0);')
@@ -186,6 +186,7 @@ class MainWindow(QMainWindow):
                         aname = tattr.config.name
                     except:
                         aname = tattr.attribute_name
+                    self.attributes[name]['label'] = aname
                     table.setItem(row, 2, QTableWidgetItem(aname))
                 if count == 0:
                     self.logger.warning('No valid tango attributes defined')
@@ -294,7 +295,11 @@ class MainWindow(QMainWindow):
             else:
                 ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
             if ai['cb'].isChecked():
-                axes.plot(ai['x'], ai['y'])
+                line = axes.plot(ai['x'], ai['y'], label=ai['label'])
+                cl = line[0].get_color()
+                print(str(cl))
+                ai['color'] = cl
+                table = self.tableWidget.item(ai['row'], 2)
             if time.time() - t1 > (self.timer_period * 0.5):
                 print('attr', an)
                 break
