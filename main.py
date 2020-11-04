@@ -87,6 +87,7 @@ class MainWindow(QMainWindow):
         # self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.onclick)
         # self.mplWidget.canvas.mpl_disconnect(cid)
         # additional decorations
+        # plt.style.use('ggplot')
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.setColumnWidth(0, 25)
@@ -274,7 +275,7 @@ class MainWindow(QMainWindow):
         for an in self.attributes:
             ai = self.attributes[an]
             if 'x' not in ai:
-                ai['x'] = np.zeros(n)
+                ai['x'] = np.arange(n) + time.time()
                 ai['y'] = np.zeros(n)
             ai['x'][:-1] = ai['x'][1:]
             ai['y'][:-1] = ai['y'][1:]
@@ -282,10 +283,12 @@ class MainWindow(QMainWindow):
             try:
                 tattr.read()
                 y = tattr.value()
-                x = tattr.time()
+                x = tattr.attribute_time()
                 quality = tattr.is_valid()
             except:
+                y = np.nan
                 y = self.y[-1] + len(an)
+                x = time.time()
                 x = self.x[-1]
                 quality = False
             ai['x'][-1] = x
@@ -295,11 +298,14 @@ class MainWindow(QMainWindow):
             else:
                 ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
             if ai['cb'].isChecked():
-                line = axes.plot(ai['x'], ai['y'], label=ai['label'])
-                cl = line[0].get_color()
-                print(str(cl))
-                ai['color'] = cl
-                table = self.tableWidget.item(ai['row'], 2)
+                if 'color' not in ai:
+                    line = axes.plot(ai['x'], ai['y'], label=ai['label'])
+                    cl = line[0].get_color()
+                    print(str(cl))
+                    ai['color'] = cl
+                    #self.tableWidget.item(ai['row'], 2)
+                else:
+                    line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
             if time.time() - t1 > (self.timer_period * 0.5):
                 print('attr', an)
                 break

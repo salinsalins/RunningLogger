@@ -329,12 +329,7 @@ class TangoAttribute:
             return None
         return self.read_result.quality
 
-    def is_valid(self):
-        if self.read_result is None:
-            return False
-        return self.read_result.quality == tango.AttrQuality.ATTR_VALID
-
-    def time(self):
+    def attribute_time(self):
         if self.read_result is None:
             return None
         return self.read_result.time.totime()
