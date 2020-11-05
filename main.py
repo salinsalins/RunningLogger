@@ -69,6 +69,7 @@ class MainWindow(QMainWindow):
         self.out_folder = None
         self.out_file_name = ''
         self.out_file = None
+        self.plot_flag = True
         # configure logging
         self.logger = logging.getLogger(PROG_NAME + PROG_VERSION)
         self.logger.setLevel(logging.DEBUG)
@@ -271,7 +272,8 @@ class MainWindow(QMainWindow):
         self.y[-1] = np.sin(tt)
         self.ai = 0
         axes = self.axes[self.ai]
-        axes.clear()
+        if self.plot_flag:
+            axes.clear()
         outstr = ''
         for an in self.attributes:
             ai = self.attributes[an]
@@ -306,7 +308,8 @@ class MainWindow(QMainWindow):
                     ai['color'] = cl
                     ai['pb_color'].setStyleSheet('background-color: %s;' % cl)
                 else:
-                    line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
+                    if self.plot_flag:
+                        line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
             #if not math.isnan(y) and y != ai['y'][-2]:
             if y != ai['y'][-2]:
                 outstr += '%s; %s; %s\n' % (an, x, y)
@@ -378,7 +381,13 @@ class MainWindow(QMainWindow):
         if not mouse_event.dblclick:
             return
         print('dblclick')
-
+        self.plot_flag = not self.plot_flag
+        if self.plot_flag:
+           self.mplWidget.ntb.hide()
+           print('hide')
+        else:
+           self.mplWidget.ntb.show()
+           print('show')
 
 
 if __name__ == '__main__':
