@@ -53,7 +53,12 @@
          </column>
          <column>
           <property name="text">
-           <string/>
+           <string>Stat</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Color</string>
           </property>
          </column>
          <column>
@@ -362,7 +367,7 @@
      <x>0</x>
      <y>0</y>
      <width>1003</width>
-     <height>34</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="font">

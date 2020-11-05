@@ -4,7 +4,7 @@ Created on Oct 29, 2020
 
 @author: sanin
 """
-
+import datetime
 import os.path
 import sys
 import time
@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 from TangoAttribute import TangoAttribute
 
 PROG_NAME = 'RunningLogger'
-PROG_VERSION = ' 0.1'
+PROG_VERSION = ' 0.5'
 settings_file_name = PROG_NAME + '.json'
 init_script = PROG_NAME + '_init.py'
 ui_file = PROG_NAME + '.ui'
@@ -64,6 +64,10 @@ class MainWindow(QMainWindow):
         self.timer_period = 1.0
         self.draw_points = 1000
         self.attributes = {}
+        self.out_root = ''
+        self.out_folder = None
+        self.out_file_name = ''
+        self.out_file = None
         # configure logging
         self.logger = logging.getLogger(PROG_NAME + PROG_VERSION)
         self.logger.setLevel(logging.DEBUG)
@@ -92,6 +96,7 @@ class MainWindow(QMainWindow):
         self.tableWidget.resizeRowsToContents()
         self.tableWidget.setColumnWidth(0, 25)
         self.tableWidget.setColumnWidth(1, 25)
+        self.tableWidget.setColumnWidth(2, 25)
         # Defile callback task and start timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
@@ -100,6 +105,7 @@ class MainWindow(QMainWindow):
         self.logger.info(PROG_NAME + PROG_VERSION + ' started')
 
     def on_quit(self):
+        self.close_output_file()
         # save global settings
         self.save_settings()
 
@@ -143,6 +149,8 @@ class MainWindow(QMainWindow):
                     ax = fig.add_subplot(self.config['subplots']["rows"], self.config['subplots']["columns"], i+1)
                     self.axes.append(ax)
                     self.mplWidget.canvas.ax = ax
+            if 'out_root' in self.config:
+                self.out_root = self.config['out_root']
             if 'timer_period' in self.config:
                 self.timer_period = self.config['timer_period']
             if 'draw_points' in self.config:
@@ -183,12 +191,17 @@ class MainWindow(QMainWindow):
                     pb.setFixedWidth(25)
                     pb.setStyleSheet('background-color: rgb(0, 255, 0);')
                     table.setCellWidget(row, 1, pb)
+                    pb = QPushButton()
+                    self.attributes[name]['pb_color'] = pb
+                    pb.setFixedWidth(25)
+                    #pb.setStyleSheet('background-color: rgb(0, 255, 0);')
+                    table.setCellWidget(row, 2, pb)
                     try:
                         aname = tattr.config.name
                     except:
                         aname = tattr.attribute_name
                     self.attributes[name]['label'] = aname
-                    table.setItem(row, 2, QTableWidgetItem(aname))
+                    table.setItem(row, 3, QTableWidgetItem(aname))
                 if count == 0:
                     self.logger.warning('No valid tango attributes defined')
             else:
@@ -246,37 +259,23 @@ class MainWindow(QMainWindow):
         t1 = time.time()
         if not hasattr(self, 't0'):
             self.t0 = time.time()
-            self.y = np.zeros(n)
+            self.y = np.full(n, np.nan)
             self.x = np.zeros(n)
             self.index = 0
-        t = time.time() - self.t0
-        tt = t / 50.0 * 2.0 * np.pi
+        t = time.time()
+        tt = (t - self.t0)/ 50.0 * 2.0 * np.pi
         self.x[:-1] = self.x[1:]
         self.y[:-1] = self.y[1:]
         self.x[-1] = t
         self.y[-1] = np.sin(tt)
-        # nd = np.concatenate([np.arange(self.index+1, n), np.arange(0, self.index+1)])
-        # self.index += 1
-        # if self.index >= n:
-        #     self.index = 0
-        # self.ai += 1
-        # if self.ai >= len(self.axes):
-        #     self.ai = 0
         self.ai = 0
         axes = self.axes[self.ai]
         axes.clear()
-        # k = 5
-        # yy = self.y * 2.0 / (k - 1)
-        # for i in range(k):
-        #     axes.plot(self.x, yy * i)
-        #     if time.time() - t1 > (self.timer_period * 0.5):
-        #         print(i)
-        #         break
         for an in self.attributes:
             ai = self.attributes[an]
             if 'x' not in ai:
-                ai['x'] = np.arange(n) + time.time()
-                ai['y'] = np.zeros(n)
+                ai['x'] = np.full(n, np.nan)
+                ai['y'] = np.full(n, np.nan)
             ai['x'][:-1] = ai['x'][1:]
             ai['y'][:-1] = ai['y'][1:]
             tattr = ai['tango']
@@ -297,19 +296,82 @@ class MainWindow(QMainWindow):
                 ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
             else:
                 ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
+                #ai['y'][-1] = np.nan
             if ai['cb'].isChecked():
                 if 'color' not in ai:
                     line = axes.plot(ai['x'], ai['y'], label=ai['label'])
                     cl = line[0].get_color()
-                    print(str(cl))
                     ai['color'] = cl
-                    #self.tableWidget.item(ai['row'], 2)
+                    ai['pb_color'].setStyleSheet('background-color: %s;' % cl)
                 else:
                     line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
-            if time.time() - t1 > (self.timer_period * 0.5):
-                print('attr', an)
+            self.make_output_folder()
+            self.out_file = self.open_output_file()
+            if self.out_file is not None:
+                outstr = '%s; %s; %s\n' % (an, x, y)
+                self.out_file.write(outstr)
+                self.close_output_file()
+            if time.time() - t1 > (self.timer_period * 0.7):
+                self.logger.warning('Timeout exceeded for %s', an)
                 break
         self.mplWidget.canvas.draw()
+
+    def make_output_folder(self):
+        of = os.path.join(self.out_root, self.get_output_folder())
+        try:
+            if not os.path.exists(of):
+                os.makedirs(of)
+                self.logger.log(logging.DEBUG, "Output folder %s has been created", self.out_folder)
+            self.out_folder = of
+            return True
+        except:
+            self.logger.log(logging.CRITICAL, "Can not create output folder %s", self.out_folder)
+            self.out_folder = None
+            return False
+
+    def get_output_folder(self):
+        ydf = datetime.datetime.today().strftime('%Y')
+        mdf = datetime.datetime.today().strftime('%Y-%m')
+        ddf = datetime.datetime.today().strftime('%Y-%m-%d')
+        folder = os.path.join(ydf, mdf, ddf)
+        return folder
+
+    # def lock_dir(self, folder):
+    #     self.lockFile = open(os.path.join(folder, "lock.lock"), 'w+')
+    #     self.locked = True
+    #     LOGGER.log(logging.DEBUG, "Directory %s locked", folder)
+
+    def open_output_file(self, folder=None):
+        if folder is None:
+            folder = self.get_output_folder()
+        self.out_file_name = os.path.join(folder, self.get_output_file_name())
+        try:
+            lgf = open(self.out_file_name, 'a')
+            return lgf
+        except:
+            self.logger.warning("Can not open output file %s", self.out_file_name)
+            self.print_exception_info()
+            return None
+
+    def close_output_file(self):
+        try:
+            self.out_file.flush()
+            self.out_file.close()
+            return True
+        except:
+            self.print_exception_info()
+            return False
+
+    def get_output_file_name(self):
+        logfn = datetime.datetime.today().strftime('%Y-%m-%d.log')
+        return logfn
+
+    def date_time_stamp(self):
+        return datetime.datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+
+    def time_stamp(self):
+        return datetime.datetime.today().strftime('%H:%M:%S')
+
 
 
 if __name__ == '__main__':
