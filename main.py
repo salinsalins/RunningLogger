@@ -80,6 +80,8 @@ class MainWindow(QMainWindow):
         # self.file_handler = logging.FileHandler(log_file)
         # self.file_handler.setFormatter(self.log_formatter)
         # self.logger.addHandler(self.file_handler)
+        # welcome message
+        self.logger.info(PROG_NAME + PROG_VERSION + ' started')
         # default main window parameters
         self.resize(QSize(480, 640))                 # size
         self.move(QPoint(50, 50))                    # position
@@ -101,8 +103,6 @@ class MainWindow(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
         self.timer.start(self.timer_period)
-        # welcome message
-        self.logger.info(PROG_NAME + PROG_VERSION + ' started')
 
     def on_quit(self):
         self.close_output_file()
@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
                 self.out_file.write(outstr)
                 self.close_output_file()
             if time.time() - t1 > (self.timer_period * 0.7):
-                self.logger.warning('Timeout exceeded for %s', an)
+                self.logger.warning('Cycle time exceeded processing %s', an)
                 break
         self.mplWidget.canvas.draw()
 
@@ -321,11 +321,11 @@ class MainWindow(QMainWindow):
         try:
             if not os.path.exists(of):
                 os.makedirs(of)
-                self.logger.log(logging.DEBUG, "Output folder %s has been created", self.out_folder)
+                self.logger.log(logging.DEBUG, "Output folder %s has been created", of)
             self.out_folder = of
             return True
         except:
-            self.logger.log(logging.CRITICAL, "Can not create output folder %s", self.out_folder)
+            self.logger.log(logging.WARNING, "Can not create output folder %s", of)
             self.out_folder = None
             return False
 
@@ -335,11 +335,6 @@ class MainWindow(QMainWindow):
         ddf = datetime.datetime.today().strftime('%Y-%m-%d')
         folder = os.path.join(ydf, mdf, ddf)
         return folder
-
-    # def lock_dir(self, folder):
-    #     self.lockFile = open(os.path.join(folder, "lock.lock"), 'w+')
-    #     self.locked = True
-    #     LOGGER.log(logging.DEBUG, "Directory %s locked", folder)
 
     def open_output_file(self, folder=None):
         if folder is None:
