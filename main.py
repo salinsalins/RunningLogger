@@ -5,6 +5,7 @@ Created on Oct 29, 2020
 @author: sanin
 """
 import datetime
+import math
 import os.path
 import sys
 import time
@@ -90,7 +91,7 @@ class MainWindow(QMainWindow):
         # restore global settings from default location
         self.restore_settings()
         # connect mouse button press event
-        # self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.onclick)
+        self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.action)
         # self.mplWidget.canvas.mpl_disconnect(cid)
         # additional decorations
         # plt.style.use('ggplot')
@@ -306,7 +307,9 @@ class MainWindow(QMainWindow):
                     ai['pb_color'].setStyleSheet('background-color: %s;' % cl)
                 else:
                     line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
-            outstr += '%s; %s; %s\n' % (an, x, y)
+            #if not math.isnan(y) and y != ai['y'][-2]:
+            if y != ai['y'][-2]:
+                outstr += '%s; %s; %s\n' % (an, x, y)
             if time.time() - t1 > (self.timer_period * 0.7):
                 self.logger.warning('Cycle time exceeded processing %s', an)
                 break
@@ -370,6 +373,11 @@ class MainWindow(QMainWindow):
 
     def time_stamp(self):
         return datetime.datetime.today().strftime('%H:%M:%S')
+
+    def action(self, mouse_event):
+        if not mouse_event.dblclick:
+            return
+        print('dblclick')
 
 
 
