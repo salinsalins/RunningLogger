@@ -271,6 +271,7 @@ class MainWindow(QMainWindow):
         self.ai = 0
         axes = self.axes[self.ai]
         axes.clear()
+        outstr = ''
         for an in self.attributes:
             ai = self.attributes[an]
             if 'x' not in ai:
@@ -305,15 +306,16 @@ class MainWindow(QMainWindow):
                     ai['pb_color'].setStyleSheet('background-color: %s;' % cl)
                 else:
                     line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
-            self.make_output_folder()
-            self.out_file = self.open_output_file()
-            if self.out_file is not None:
-                outstr = '%s; %s; %s\n' % (an, x, y)
-                self.out_file.write(outstr)
-                self.close_output_file()
+            outstr += '%s; %s; %s\n' % (an, x, y)
             if time.time() - t1 > (self.timer_period * 0.7):
                 self.logger.warning('Cycle time exceeded processing %s', an)
                 break
+        if outstr != '':
+            self.make_output_folder()
+            self.out_file = self.open_output_file()
+            if self.out_file is not None:
+                self.out_file.write(outstr)
+                self.close_output_file()
         self.mplWidget.canvas.draw()
 
     def make_output_folder(self):
@@ -349,6 +351,8 @@ class MainWindow(QMainWindow):
             return None
 
     def close_output_file(self):
+        if self.out_file.closed:
+            return
         try:
             self.out_file.flush()
             self.out_file.close()

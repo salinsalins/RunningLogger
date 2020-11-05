@@ -232,11 +232,11 @@ class TangoAttribute:
                 raise
         except TangoAttributeConnectionFailed:
             self.read_call_id = None
-            msg = 'Attribute %s read TangoAttributeConnectionFailed' % self.full_name
+            msg = 'Attribute %s read connection failed' % self.full_name
             self.logger.info(msg)
             raise
         except:
-            msg = 'Attribute %s read Exception %s' % (self.full_name, sys.exc_info()[0])
+            msg = 'Attribute %s read exception %s' % (self.full_name, sys.exc_info()[0])
             self.logger.info(msg)
             self.logger.debug('Exception:', exc_info=True)
             self.read_call_id = None
