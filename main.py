@@ -11,6 +11,7 @@ import sys
 import time
 import json
 import logging
+import threading
 
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QWidget
 from PyQt5.QtWidgets import QApplication
@@ -105,6 +106,7 @@ class MainWindow(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
         self.timer.start(self.timer_period)
+        self.thread = myThread("Thread", 1)
 
     def on_quit(self):
         self.close_output_file()
@@ -388,6 +390,20 @@ class MainWindow(QMainWindow):
         else:
            self.mplWidget.ntb.show()
            print('show')
+
+
+class myThread (threading.Thread):
+    def __init__(self, name, counter):
+        threading.Thread.__init__(self)
+        self.threadID = counter
+        self.name = name
+        self.counter = counter
+
+    def run(self):
+        print("\nStarting " + self.name)
+        while True:
+            pass
+        print("Exiting " + self.name)
 
 
 if __name__ == '__main__':
