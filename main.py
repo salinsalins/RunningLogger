@@ -108,6 +108,7 @@ class MainWindow(QMainWindow):
         self.timer.timeout.connect(self.timer_handler)
         self.timer.start(self.timer_period)
         self.thread = myThread("Thread", 1)
+        self.thread.daemon = True
         self.thread.start()
 
     def on_quit(self):
@@ -408,10 +409,16 @@ class myThread (threading.Thread):
         asyncio.run(async_test())
         print("Exiting " + self.name)
 
+tt0 = 0.0
 async def async_test():
+    global tt0
     print('async_test ...')
     while True:
         await asyncio.sleep(0.2)
+        if tt0 > 0.0:
+            if tt0 - time.time() > 0.22:
+                print('tt esceeded', tt0 - time.time())
+            tt0 = time.time()
         print('async_test timer')
     print('... async_test')
 

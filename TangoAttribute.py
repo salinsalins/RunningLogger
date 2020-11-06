@@ -4,7 +4,7 @@ Created on Feb 4, 2020
 
 @author: sanin
 """
-
+import asyncio
 import sys
 import time
 import logging
@@ -266,6 +266,30 @@ class TangoAttribute:
         self.read_call_id = self.device_proxy.read_attribute_asynch(self.attribute_name)
         self.read_time = time.time()
 
+    async def async_read(self):
+        if self.read_call_id is None:
+            # no read request before, so send read request
+            self.read_call_id = self.device_proxy.read_attribute_asynch(self.attribute_name)
+            self.read_time = time.time()
+        while time.time() - self.read_time < self.read_timeout:
+            try:
+                # check for read request complete (Exception if not completed or error)
+                self.read_result = self.device_proxy.read_attribute_reply(self.read_call_id)
+                self.read_call_id = None
+                return self.read_result.value
+            except tango.AsynReplyNotArrived:
+                await asyncio.sleep(0)
+            except:
+                self.logger.warning('Attribute %s read exception %s', self.full_name, sys.exc_info()[0])
+                self.logger.debug('Exception:', exc_info=True)
+                self.read_call_id = None
+                self.read_result = None
+                self.disconnect()
+                raise
+        # timeout exceeded
+        self.logger.warning('Timeout reading %s', self.full_name)
+        return None
+
     def write(self, value, sync=None):
         if self.readonly:
             return
@@ -318,9 +342,9 @@ class TangoAttribute:
         # self.logger.debug(msg)
 
     def value(self):
-        if self.read_result is None:
+        if self.read_result is None or self.read_result.value is None:
             return None
-        if self.is_boolean() or self.read_result.value is None:
+        if self.is_boolean():
             return self.read_result.value
         return self.read_result.value * self.coeff
 
