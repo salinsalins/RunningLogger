@@ -266,12 +266,14 @@ class TangoAttribute:
         self.read_call_id = self.device_proxy.read_attribute_asynch(self.attribute_name)
         self.read_time = time.time()
 
-    async def async_read(self):
+    async def async_read(self, timeout=None):
+        if timeout is None:
+            timeout = self.read_timeout
         if self.read_call_id is None:
             # no read request before, so send read request
             self.read_call_id = self.device_proxy.read_attribute_asynch(self.attribute_name)
             self.read_time = time.time()
-        while time.time() - self.read_time < self.read_timeout:
+        while time.time() - self.read_time < timeout:
             try:
                 # check for read request complete (Exception if not completed or error)
                 self.read_result = self.device_proxy.read_attribute_reply(self.read_call_id)
