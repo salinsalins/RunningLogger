@@ -4,6 +4,7 @@ Created on Oct 29, 2020
 
 @author: sanin
 """
+import asyncio
 import datetime
 import math
 import os.path
@@ -107,6 +108,7 @@ class MainWindow(QMainWindow):
         self.timer.timeout.connect(self.timer_handler)
         self.timer.start(self.timer_period)
         self.thread = myThread("Thread", 1)
+        self.thread.start()
 
     def on_quit(self):
         self.close_output_file()
@@ -401,10 +403,17 @@ class myThread (threading.Thread):
 
     def run(self):
         print("\nStarting " + self.name)
-        while True:
-            pass
+        # while True:
+        #     pass
+        asyncio.run(async_test())
         print("Exiting " + self.name)
 
+async def async_test():
+    print('async_test ...')
+    while True:
+        await asyncio.sleep(0.2)
+        print('async_test timer')
+    print('... async_test')
 
 if __name__ == '__main__':
     # create the GUI application
