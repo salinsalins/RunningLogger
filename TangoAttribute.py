@@ -73,7 +73,7 @@ class TangoAttributeConnectionFailed(tango.ConnectionFailed):
 class TangoAttribute:
     devices = {}
     attributes = {}
-    reconnect_timeout = 5.0
+    reconnect_timeout = 3.0
 
     # def __new__(cls, name, *args, **kwargs):
     #     if name in TangoAttribute.attributes:
@@ -270,7 +270,6 @@ class TangoAttribute:
         if timeout is None:
             timeout = self.read_timeout
         if self.read_call_id is None:
-            # no read request before, so send read request
             self.read_call_id = self.device_proxy.read_attribute_asynch(self.attribute_name)
             self.read_time = time.time()
         while time.time() - self.read_time < timeout:
@@ -291,6 +290,51 @@ class TangoAttribute:
         # timeout exceeded
         self.logger.warning('Timeout reading %s', self.full_name)
         return None
+
+    async def async_reconnect(self):
+        if self.device_name in TangoAttribute.devices and TangoAttribute.devices[self.device_name] is not self.device_proxy:
+            self.logger.debug('Device proxy changed for %s' % self.full_name)
+            if time.time() - self.time > self.reconnect_timeout:
+                self.connect()
+        if self.connected:
+            return
+        if time.time() - self.time > self.reconnect_timeout:
+            self.logger.debug('Reconnection timeout exceeded for %s' % self.full_name)
+            self.connect()
+
+    async def async_create_device_proxy(self):
+        dp = None
+        if self.device_name in TangoAttribute.devices and TangoAttribute.devices[self.device_name] is not None:
+            # device exists in the list
+            try:
+                # check if device is alive
+                pt = TangoAttribute.devices[self.device_name].ping()
+                dp = TangoAttribute.devices[self.device_name]
+                self.logger.debug('Device %s for %s exists, ping=%ds' % (self.device_name, self.attribute_name, pt))
+            except:
+                self.logger.warning('Exception %s connecting to %s' % (sys.exc_info()[0], self.device_name))
+                self.logger.debug('Exception:', exc_info=True)
+                dp = None
+                TangoAttribute.devices[self.device_name] = dp
+        if dp is None:
+            try:
+                dp = tango.DeviceProxy(self.device_name)
+                dp.ping()
+                self.logger.info('Device proxy for %s has been created' % self.device_name)
+            except:
+                self.logger.warning('Device %s creation exception' % self.device_name)
+                dp = None
+            TangoAttribute.devices[self.device_name] = dp
+        return dp
+
+    def set_config(self):
+        self.config = self.device_proxy.get_attribute_config_ex(self.attribute_name)[0]
+        self.format = self.config.format
+        try:
+            self.coeff = float(self.config.display_unit)
+        except:
+            self.coeff = 1.0
+        self.readonly = self.readonly or self.is_readonly()
 
     def write(self, value, sync=None):
         if self.readonly:

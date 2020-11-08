@@ -33,6 +33,8 @@ from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
 
 from TangoAttribute import TangoAttribute
+import tango
+#from tango.asyncio import DeviceProxy
 
 PROG_NAME = 'RunningLogger'
 PROG_VERSION = ' 0.5'
@@ -412,7 +414,7 @@ class myThread (threading.Thread):
 tt0 = 0.0
 async def async_test():
     global tt0
-    print('async_test ...')
+    print('Start async_test ...')
     while True:
         await asyncio.sleep(0.2)
         if tt0 > 0.0:
@@ -421,6 +423,24 @@ async def async_test():
             tt0 = time.time()
         print('async_test timer')
     print('... async_test')
+
+
+async def async_read_attribute(attrib, x, y):
+    try:
+        await attrib.async_read()
+        y1 = attrib.value()
+        x1 = attrib.attribute_time()
+        q = attrib.is_valid()
+    except:
+        attrib.logger.debug('Acync reading exception ', exc_info=True)
+        y1 = np.nan
+        x1 = time.time()
+        q = False
+    x[:-1] = x[1:]
+    y[:-1] = y[1:]
+    x[-1] = x1
+    y[-1] = y1
+    
 
 if __name__ == '__main__':
     # create the GUI application
