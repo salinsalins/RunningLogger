@@ -6,6 +6,7 @@ Created on Feb 4, 2020
 """
 import asyncio
 import sys
+import threading
 import time
 import logging
 
@@ -111,6 +112,8 @@ class TangoAttribute:
         TangoAttribute.attributes[self.full_name] = self
 
     def connect(self):
+        # if self.device_proxy is not None:
+        #     return
         try:
             self.device_proxy = self.create_device_proxy()
             self.set_config()
@@ -135,6 +138,7 @@ class TangoAttribute:
         if self.device_name in TangoAttribute.devices and TangoAttribute.devices[self.device_name] is not self.device_proxy:
             self.logger.debug('Device proxy changed for %s' % self.full_name)
             if time.time() - self.time > self.reconnect_timeout:
+                self.device_proxy = TangoAttribute.devices[self.device_name]
                 self.connect()
         if self.connected:
             return
@@ -201,6 +205,7 @@ class TangoAttribute:
             return False
 
     def test_connection(self):
+        return
         if not self.connected:
             msg = 'Attribute %s is not connected' % self.full_name
             self.logger.debug(msg)
@@ -327,15 +332,6 @@ class TangoAttribute:
             TangoAttribute.devices[self.device_name] = dp
         return dp
 
-    def set_config(self):
-        self.config = self.device_proxy.get_attribute_config_ex(self.attribute_name)[0]
-        self.format = self.config.format
-        try:
-            self.coeff = float(self.config.display_unit)
-        except:
-            self.coeff = 1.0
-        self.readonly = self.readonly or self.is_readonly()
-
     def write(self, value, sync=None):
         if self.readonly:
             return
@@ -415,3 +411,18 @@ class TangoAttribute:
         except:
             txt = str(self.value())
         return txt
+
+
+class ReconnectionThread (threading.Thread):
+    def __init__(self, name, counter):
+        threading.Thread.__init__(self)
+        self.threadID = counter
+        self.name = name
+
+    def run(self):
+        print("\nStarting " + self.name)
+        # while True:
+        #     self.read_attributes()
+            #time.sleep(0.5)
+        # asyncio.run(async_test())
+        print("Exiting " + self.name)

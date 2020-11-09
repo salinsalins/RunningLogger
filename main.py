@@ -180,6 +180,7 @@ class MainWindow(QMainWindow):
                         count += 1
                     self.attributes[name]['x'] = np.full(self.draw_points, np.nan)
                     self.attributes[name]['y'] = np.full(self.draw_points, np.nan)
+                    self.attributes[name]['qality'] = False
                     row = table.rowCount()
                     self.attributes[name]['row'] = row
                     table.insertRow(row)
@@ -310,6 +311,10 @@ class MainWindow(QMainWindow):
             # else:
             #     ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
             #     #ai['y'][-1] = np.nan
+            if ai['quality']:
+                ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
+            else:
+                ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
             if ai['cb'].isChecked():
                 if 'color' not in ai:
                     line = axes.plot(ai['x'], ai['y'], label=ai['label'])
@@ -404,7 +409,6 @@ class myThread (threading.Thread):
         threading.Thread.__init__(self)
         self.threadID = counter
         self.name = name
-        self.counter = counter
 
     def run(self):
         print("\nStarting " + self.name)
@@ -429,14 +433,17 @@ class myThread (threading.Thread):
                 y = np.nan
                 x = time.time()
                 quality = False
+            if y is None:
+                y = np.nan
             ai['x'][:-1] = ai['x'][1:]
             ai['y'][:-1] = ai['y'][1:]
             ai['x'][-1] = x
             ai['y'][-1] = y
-            if quality:
-                ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
-            else:
-                ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
+            ai['quality'] = quality
+            # if quality:
+            #     ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
+            # else:
+            #     ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
                 #ai['y'][-1] = np.nan
             #if not math.isnan(y) and y != ai['y'][-2]:
             if y != ai['y'][-2] and not (math.isnan(y) and math.isnan(ai['y'][-2])):
