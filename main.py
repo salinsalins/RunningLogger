@@ -178,6 +178,8 @@ class MainWindow(QMainWindow):
                     self.attributes[name]['tango'] = tattr
                     if tattr.device_proxy is not None:
                         count += 1
+                    self.attributes[name]['x'] = np.full(self.draw_points, np.nan)
+                    self.attributes[name]['y'] = np.full(self.draw_points, np.nan)
                     row = table.rowCount()
                     self.attributes[name]['row'] = row
                     table.insertRow(row)
@@ -264,50 +266,50 @@ class MainWindow(QMainWindow):
     def timer_handler(self):
         if not self.pushButton.isChecked():
             return
-        n = self.draw_points
+        # n = self.draw_points
         t1 = time.time()
-        if not hasattr(self, 't0'):
-            self.t0 = time.time()
-            self.y = np.full(n, np.nan)
-            self.x = np.zeros(n)
-            self.index = 0
-        t = time.time()
-        tt = (t - self.t0)/ 50.0 * 2.0 * np.pi
-        self.x[:-1] = self.x[1:]
-        self.y[:-1] = self.y[1:]
-        self.x[-1] = t
-        self.y[-1] = np.sin(tt)
+        # if not hasattr(self, 't0'):
+        #     self.t0 = time.time()
+        #     self.y = np.full(n, np.nan)
+        #     self.x = np.zeros(n)
+        #     self.index = 0
+        # t = time.time()
+        # tt = (t - self.t0)/ 50.0 * 2.0 * np.pi
+        # self.x[:-1] = self.x[1:]
+        # self.y[:-1] = self.y[1:]
+        # self.x[-1] = t
+        # self.y[-1] = np.sin(tt)
         self.ai = 0
         axes = self.axes[self.ai]
         if self.plot_flag:
             axes.clear()
-        outstr = ''
+        # outstr = ''
         for an in self.attributes:
             ai = self.attributes[an]
-            if 'x' not in ai:
-                ai['x'] = np.full(n, np.nan)
-                ai['y'] = np.full(n, np.nan)
-            ai['x'][:-1] = ai['x'][1:]
-            ai['y'][:-1] = ai['y'][1:]
-            tattr = ai['tango']
-            try:
-                tattr.read()
-                y = tattr.value()
-                x = tattr.attribute_time()
-                quality = tattr.is_valid()
-            except:
-                y = np.nan
-                y = self.y[-1] + len(an)
-                x = time.time()
-                x = self.x[-1]
-                quality = False
-            ai['x'][-1] = x
-            ai['y'][-1] = y
-            if quality:
-                ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
-            else:
-                ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
-                #ai['y'][-1] = np.nan
+            # if 'x' not in ai:
+            #     ai['x'] = np.full(n, np.nan)
+            #     ai['y'] = np.full(n, np.nan)
+            # ai['x'][:-1] = ai['x'][1:]
+            # ai['y'][:-1] = ai['y'][1:]
+            # tattr = ai['tango']
+            # try:
+            #     tattr.read()
+            #     y = tattr.value()
+            #     x = tattr.attribute_time()
+            #     quality = tattr.is_valid()
+            # except:
+            #     y = np.nan
+            #     y = self.y[-1] + len(an)
+            #     x = time.time()
+            #     x = self.x[-1]
+            #     quality = False
+            # ai['x'][-1] = x
+            # ai['y'][-1] = y
+            # if quality:
+            #     ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
+            # else:
+            #     ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
+            #     #ai['y'][-1] = np.nan
             if ai['cb'].isChecked():
                 if 'color' not in ai:
                     line = axes.plot(ai['x'], ai['y'], label=ai['label'])
@@ -318,17 +320,17 @@ class MainWindow(QMainWindow):
                     if self.plot_flag:
                         line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
             #if not math.isnan(y) and y != ai['y'][-2]:
-            if y != ai['y'][-2]:
-                outstr += '%s; %s; %s\n' % (an, x, y)
+            # if y != ai['y'][-2]:
+            #     outstr += '%s; %s; %s\n' % (an, x, y)
             if time.time() - t1 > (self.timer_period * 0.7):
                 self.logger.warning('Cycle time exceeded processing %s', an)
                 break
-        if outstr != '':
-            self.make_output_folder()
-            self.out_file = self.open_output_file()
-            if self.out_file is not None:
-                self.out_file.write(outstr)
-                self.close_output_file()
+        # if outstr != '':
+        #     self.make_output_folder()
+        #     self.out_file = self.open_output_file()
+        #     if self.out_file is not None:
+        #         self.out_file.write(outstr)
+        #         self.close_output_file()
         self.mplWidget.canvas.draw()
 
     def make_output_folder(self):
@@ -406,10 +408,51 @@ class myThread (threading.Thread):
 
     def run(self):
         print("\nStarting " + self.name)
-        # while True:
-        #     pass
-        asyncio.run(async_test())
+        while True:
+            self.read_attributes()
+            #time.sleep(0.5)
+        # asyncio.run(async_test())
         print("Exiting " + self.name)
+
+    def read_attributes(self):
+        outstr = ''
+        t0 = time.time()
+        for an in main_window.attributes:
+            ai = main_window.attributes[an]
+            tattr = ai['tango']
+            try:
+                tattr.read()
+                y = tattr.value()
+                x = tattr.attribute_time()
+                quality = tattr.is_valid()
+            except:
+                y = np.nan
+                x = time.time()
+                quality = False
+            ai['x'][:-1] = ai['x'][1:]
+            ai['y'][:-1] = ai['y'][1:]
+            ai['x'][-1] = x
+            ai['y'][-1] = y
+            if quality:
+                ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
+            else:
+                ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
+                #ai['y'][-1] = np.nan
+            #if not math.isnan(y) and y != ai['y'][-2]:
+            if y != ai['y'][-2] and not (math.isnan(y) and math.isnan(ai['y'][-2])):
+                outstr += '%s; %s; %s\n' % (an, x, y)
+            if time.time() - t0 > (main_window.timer_period * 0.7):
+                main_window.logger.warning('Cycle time exceeded processing %s', an)
+                break
+        if outstr != '':
+            main_window.make_output_folder()
+            main_window.out_file = main_window.open_output_file()
+            if main_window.out_file is not None:
+                main_window.out_file.write(outstr)
+                main_window.close_output_file()
+        dt = main_window.timer_period - (time.time() - t0)
+        if dt > 0.0:
+            time.sleep(dt)
 
 tt0 = 0.0
 async def async_test():
