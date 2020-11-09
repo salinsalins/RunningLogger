@@ -138,7 +138,7 @@ class TangoAttribute:
         if self.device_name in TangoAttribute.devices and TangoAttribute.devices[self.device_name] is not self.device_proxy:
             self.logger.debug('Device proxy changed for %s' % self.full_name)
             if time.time() - self.time > self.reconnect_timeout:
-                self.device_proxy = TangoAttribute.devices[self.device_name]
+                #self.device_proxy = TangoAttribute.devices[self.device_name]
                 self.connect()
         if self.connected:
             return
@@ -205,7 +205,7 @@ class TangoAttribute:
             return False
 
     def test_connection(self):
-        return
+        #return
         if not self.connected:
             msg = 'Attribute %s is not connected' % self.full_name
             self.logger.debug(msg)

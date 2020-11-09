@@ -109,6 +109,7 @@ class MainWindow(QMainWindow):
         self.timer = QTimer()
         self.timer.timeout.connect(self.timer_handler)
         self.timer.start(self.timer_period)
+        # reading thread
         self.thread = myThread("Thread", 1)
         self.thread.daemon = True
         self.thread.start()
@@ -180,7 +181,7 @@ class MainWindow(QMainWindow):
                         count += 1
                     self.attributes[name]['x'] = np.full(self.draw_points, np.nan)
                     self.attributes[name]['y'] = np.full(self.draw_points, np.nan)
-                    self.attributes[name]['qality'] = False
+                    self.attributes[name]['quality'] = False
                     row = table.rowCount()
                     self.attributes[name]['row'] = row
                     table.insertRow(row)
@@ -412,10 +413,13 @@ class myThread (threading.Thread):
 
     def run(self):
         print("\nStarting " + self.name)
-        while True:
-            self.read_attributes()
-            #time.sleep(0.5)
-        # asyncio.run(async_test())
+        try:
+            while True:
+                self.read_attributes()
+                #time.sleep(0.5)
+            # asyncio.run(async_test())
+        except:
+            print('exception')
         print("Exiting " + self.name)
 
     def read_attributes(self):
