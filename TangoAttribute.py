@@ -12,6 +12,7 @@ import logging
 
 import tango
 import tango.server
+from tango.asyncio import DeviceProxy as AsyncDeviceProxy
 
 
 def split_attribute_name(full_name):
@@ -402,9 +403,8 @@ class TangoAttribute:
         if self.device_proxy is not None:
             return
         try:
-            self.device_proxy = self.create_device_proxy()
+            self.device_proxy = await self.async_create_device_proxy()
             self.set_config()
-            self.read_result = self.device_proxy.read_attribute(self.attribute_name)
             self.connected = True
             self.time = 0.0
             self.logger.info('Attribute %s has been connected', self.full_name)
@@ -429,7 +429,7 @@ class TangoAttribute:
                 TangoAttribute.devices[self.device_name] = dp
         if dp is None:
             try:
-                dp = tango.DeviceProxy(self.device_name)
+                dp = await AsyncDeviceProxy(self.device_name)
                 dp.ping()
                 self.logger.info('Device proxy for %s has been created' % self.device_name)
             except:
