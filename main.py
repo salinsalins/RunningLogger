@@ -490,7 +490,6 @@ class DispatcherThread (threading.Thread):
     def run(self):
         print("\nStarting " + self.name)
         asyncio.run(self.async_read_attributes())
-        print("Exiting " + self.name)
 
     async def async_read_attributes(self):
         global main_window
@@ -528,9 +527,9 @@ class DispatcherThread (threading.Thread):
                     ai['quality'] = quality
                     if y != ai['y'][-2] and not (math.isnan(y) and math.isnan(ai['y'][-2])):
                         outstr += '%s; %s; %s\n' % (an, x, y)
-                    if time.time() - t0 > (main_window.timer_period * 0.7):
-                        main_window.logger.warning('Cycle time exceeded processing %s', an)
-                        break
+                    # if time.time() - t0 > (main_window.timer_period * 0.7):
+                    #     main_window.logger.warning('Cycle time exceeded processing %s', an)
+                    #     break
             await asyncio.sleep(0)
             if outstr != '':
                 main_window.make_output_folder()

@@ -69,7 +69,7 @@
         </widget>
        </item>
        <item>
-        <widget class="PyQtGraphWidget" name="graphicsView">
+        <widget class="PlotWidget" name="graphicsView">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>4</horstretch>
@@ -453,9 +453,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>PyQtGraphWidget</class>
+   <class>PlotWidget</class>
    <extends>QGraphicsView</extends>
-   <header>pyqtgraphwidget</header>
+   <header>pyqtgraph</header>
   </customwidget>
  </customwidgets>
  <resources/>
