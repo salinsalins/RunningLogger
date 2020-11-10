@@ -493,6 +493,7 @@ class DispatcherThread (threading.Thread):
         print("Exiting " + self.name)
 
     async def async_read_attributes(self):
+        global main_window
         while True:
             t0 = time.time()
             for an in main_window.attributes:
