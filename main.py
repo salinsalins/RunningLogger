@@ -46,7 +46,6 @@ data_file = PROG_NAME + '.dat'
 
 
 class MainWindow(QMainWindow):
-    """Customization for Qt Designer created window"""
 
     def __init__(self, parent=None):
         # initialization of the superclass
@@ -186,9 +185,7 @@ class MainWindow(QMainWindow):
                     row = table.rowCount()
                     self.attributes[name]['row'] = row
                     table.insertRow(row)
-                    #cb = QCheckBox()
-                    #cb.setFixedWidth(50)
-                    #cb.setLayout(QVBoxLayout())
+                    # plot checkbox
                     pWidget = QWidget()
                     pCheckbox = QCheckBox()
                     pLayout = QVBoxLayout()
@@ -199,17 +196,18 @@ class MainWindow(QMainWindow):
                     self.attributes[name]['cb'] = pCheckbox
                     pCheckbox.setCheckState(QtCore.Qt.Checked)
                     table.setCellWidget(row, 0, pWidget)
+                    # status button
                     pb = QPushButton()
-                    #pb.cli
                     self.attributes[name]['status'] = pb
                     pb.setFixedWidth(25)
                     pb.setStyleSheet('background-color: rgb(0, 255, 0);')
                     table.setCellWidget(row, 1, pb)
+                    # color button
                     pb = QPushButton()
                     self.attributes[name]['pb_color'] = pb
                     pb.setFixedWidth(25)
-                    #pb.setStyleSheet('background-color: rgb(0, 255, 0);')
                     table.setCellWidget(row, 2, pb)
+                    # fill name
                     try:
                         aname = tattr.config.name
                     except:
@@ -269,50 +267,12 @@ class MainWindow(QMainWindow):
     def timer_handler(self):
         if not self.pushButton.isChecked():
             return
-        # n = self.draw_points
-        t1 = time.time()
-        # if not hasattr(self, 't0'):
-        #     self.t0 = time.time()
-        #     self.y = np.full(n, np.nan)
-        #     self.x = np.zeros(n)
-        #     self.index = 0
-        # t = time.time()
-        # tt = (t - self.t0)/ 50.0 * 2.0 * np.pi
-        # self.x[:-1] = self.x[1:]
-        # self.y[:-1] = self.y[1:]
-        # self.x[-1] = t
-        # self.y[-1] = np.sin(tt)
         self.ai = 0
         axes = self.axes[self.ai]
         if self.plot_flag:
             axes.clear()
-        # outstr = ''
         for an in self.attributes:
             ai = self.attributes[an]
-            # if 'x' not in ai:
-            #     ai['x'] = np.full(n, np.nan)
-            #     ai['y'] = np.full(n, np.nan)
-            # ai['x'][:-1] = ai['x'][1:]
-            # ai['y'][:-1] = ai['y'][1:]
-            # tattr = ai['tango']
-            # try:
-            #     tattr.read()
-            #     y = tattr.value()
-            #     x = tattr.attribute_time()
-            #     quality = tattr.is_valid()
-            # except:
-            #     y = np.nan
-            #     y = self.y[-1] + len(an)
-            #     x = time.time()
-            #     x = self.x[-1]
-            #     quality = False
-            # ai['x'][-1] = x
-            # ai['y'][-1] = y
-            # if quality:
-            #     ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
-            # else:
-            #     ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
-            #     #ai['y'][-1] = np.nan
             if ai['quality']:
                 ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
             else:
@@ -326,18 +286,6 @@ class MainWindow(QMainWindow):
                 else:
                     if self.plot_flag:
                         line = axes.plot(ai['x'], ai['y'], color = ai['color'], label=ai['label'])
-            #if not math.isnan(y) and y != ai['y'][-2]:
-            # if y != ai['y'][-2]:
-            #     outstr += '%s; %s; %s\n' % (an, x, y)
-            if time.time() - t1 > (self.timer_period * 0.7):
-                self.logger.warning('Cycle time exceeded processing %s', an)
-                break
-        # if outstr != '':
-        #     self.make_output_folder()
-        #     self.out_file = self.open_output_file()
-        #     if self.out_file is not None:
-        #         self.out_file.write(outstr)
-        #         self.close_output_file()
         self.mplWidget.canvas.draw()
 
     def make_output_folder(self):
@@ -465,20 +413,6 @@ class myThread (threading.Thread):
         dt = main_window.timer_period - (time.time() - t0)
         if dt > 0.0:
             time.sleep(dt)
-
-
-tt0 = 0.0
-async def async_test():
-    global tt0
-    print('Start async_test ...')
-    while True:
-        await asyncio.sleep(0.2)
-        if tt0 > 0.0:
-            if tt0 - time.time() > 0.22:
-                print('tt esceeded', tt0 - time.time())
-            tt0 = time.time()
-        print('async_test timer')
-    print('... async_test')
 
 
 class DispatcherThread (threading.Thread):
