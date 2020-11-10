@@ -182,6 +182,7 @@ class MainWindow(QMainWindow):
                     self.attributes[name]['x'] = np.full(self.draw_points, np.nan)
                     self.attributes[name]['y'] = np.full(self.draw_points, np.nan)
                     self.attributes[name]['quality'] = False
+                    self.attributes[name]['task'] = None
                     row = table.rowCount()
                     self.attributes[name]['row'] = row
                     table.insertRow(row)
@@ -427,6 +428,81 @@ class myThread (threading.Thread):
         t0 = time.time()
         for an in main_window.attributes:
             ai = main_window.attributes[an]
+            if ai['task'] is None:
+                tattr = ai['tango']
+                ai['task'] = asyncio.create_task(tattr.async_read())
+        for an in main_window.attributes:
+            ai = main_window.attributes[an]
+            tattr = ai['tango']
+            task = ai['task']
+            if task is not None:
+                if not task.done():
+                    continue
+                ai['task'] = None
+                if task.exception() is None:
+                    y = tattr.value()
+                    x = tattr.attribute_time()
+                    quality = tattr.is_valid()
+                else:
+                    y = np.nan
+                    x = time.time()
+                    quality = False
+                if y is None:
+                    y = np.nan
+                ai['x'][:-1] = ai['x'][1:]
+                ai['y'][:-1] = ai['y'][1:]
+                ai['x'][-1] = x
+                ai['y'][-1] = y
+                ai['quality'] = quality
+                if y != ai['y'][-2] and not (math.isnan(y) and math.isnan(ai['y'][-2])):
+                    outstr += '%s; %s; %s\n' % (an, x, y)
+                if time.time() - t0 > (main_window.timer_period * 0.7):
+                    main_window.logger.warning('Cycle time exceeded processing %s', an)
+                    break
+        if outstr != '':
+            main_window.make_output_folder()
+            main_window.out_file = main_window.open_output_file()
+            if main_window.out_file is not None:
+                main_window.out_file.write(outstr)
+                main_window.close_output_file()
+        dt = main_window.timer_period - (time.time() - t0)
+        if dt > 0.0:
+            await asyncio.sleep(dt)
+        else:
+            await asyncio.sleep(0)
+
+
+tt0 = 0.0
+async def async_test():
+    global tt0
+    print('Start async_test ...')
+    while True:
+        await asyncio.sleep(0.2)
+        if tt0 > 0.0:
+            if tt0 - time.time() > 0.22:
+                print('tt esceeded', tt0 - time.time())
+            tt0 = time.time()
+        print('async_test timer')
+    print('... async_test')
+
+class DispatcherThread (threading.Thread):
+    def __init__(self, name, counter):
+        threading.Thread.__init__(self)
+        self.threadID = counter
+        self.name = name
+
+    def run(self):
+        print("\nStarting " + self.name)
+        asyncio.run(async_read_attributes())
+        print("Exiting " + self.name)
+
+
+async def async_read_attributes():
+    while True:
+        outstr = ''
+        t0 = time.time()
+        for an in main_window.attributes:
+            ai = main_window.attributes[an]
             tattr = ai['tango']
             try:
                 tattr.read()
@@ -448,8 +524,8 @@ class myThread (threading.Thread):
             #     ai['status'].setStyleSheet('background-color: rgb(0, 255, 0);')
             # else:
             #     ai['status'].setStyleSheet('background-color: rgb(255, 0, 0);')
-                #ai['y'][-1] = np.nan
-            #if not math.isnan(y) and y != ai['y'][-2]:
+            # ai['y'][-1] = np.nan
+            # if not math.isnan(y) and y != ai['y'][-2]:
             if y != ai['y'][-2] and not (math.isnan(y) and math.isnan(ai['y'][-2])):
                 outstr += '%s; %s; %s\n' % (an, x, y)
             if time.time() - t0 > (main_window.timer_period * 0.7):
@@ -465,38 +541,9 @@ class myThread (threading.Thread):
         if dt > 0.0:
             time.sleep(dt)
 
-tt0 = 0.0
-async def async_test():
-    global tt0
-    print('Start async_test ...')
-    while True:
-        await asyncio.sleep(0.2)
-        if tt0 > 0.0:
-            if tt0 - time.time() > 0.22:
-                print('tt esceeded', tt0 - time.time())
-            tt0 = time.time()
-        print('async_test timer')
-    print('... async_test')
-
-
-async def async_read_attribute(attrib, x, y):
-    try:
-        await attrib.async_read()
-        y1 = attrib.value()
-        x1 = attrib.attribute_time()
-        q = attrib.is_valid()
-    except:
-        attrib.logger.debug('Acync reading exception ', exc_info=True)
-        y1 = np.nan
-        x1 = time.time()
-        q = False
-    x[:-1] = x[1:]
-    y[:-1] = y[1:]
-    x[-1] = x1
-    y[-1] = y1
-    
 
 if __name__ == '__main__':
+    ## config loggin
     # create the GUI application
     app = QApplication(sys.argv)
     # instantiate the main window
