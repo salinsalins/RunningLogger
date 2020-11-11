@@ -361,6 +361,8 @@ class TangoAttribute:
 
     async def async_connect(self):
         if self.device_proxy is not None:
+            gm =self.device_proxy.get_green_mode()
+            print(gm, gm == tango.GreenMode.Asyncio, tango.GreenMode.Asyncio)
             self.connected = True
             self.time = 0.0
             # self.logger.debug('Already connected %s' % self.full_name)
