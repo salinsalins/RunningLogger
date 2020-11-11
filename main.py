@@ -74,13 +74,13 @@ class MainWindow(QMainWindow):
         self.out_file = None
         self.plot_flag = True
         # configure logging
-        self.logger = logging.getLogger(PROG_NAME + PROG_VERSION)
+        self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        self.f_str = '%(asctime)s,%(msecs)3d %(levelname)-7s %(filename)s %(funcName)s(%(lineno)s) %(message)s'
-        self.log_formatter = logging.Formatter(self.f_str, datefmt='%H:%M:%S')
-        self.console_handler = logging.StreamHandler()
-        self.console_handler.setFormatter(self.log_formatter)
-        self.logger.addHandler(self.console_handler)
+        # self.f_str = '%(asctime)s,%(msecs)3d %(levelname)-7s %(filename)s %(funcName)s(%(lineno)s) %(message)s'
+        # self.log_formatter = logging.Formatter(self.f_str, datefmt='%H:%M:%S')
+        # self.console_handler = logging.StreamHandler()
+        # self.console_handler.setFormatter(self.log_formatter)
+        # self.logger.addHandler(self.console_handler)
         # logging to file
         # self.file_handler = logging.FileHandler(log_file)
         # self.file_handler.setFormatter(self.log_formatter)
@@ -479,7 +479,19 @@ class DispatcherThread (threading.Thread):
 
 
 if __name__ == '__main__':
-    ## config loggin
+    # configure logging
+    # logger = logging.getLogger(PROG_NAME + PROG_VERSION)
+    logger = logging.getLogger(__name__)
+    # logger.setLevel(logging.DEBUG)
+    f_str = '%(asctime)s,%(msecs)3d %(levelname)-7s %(filename)s %(funcName)s(%(lineno)s) %(message)s'
+    log_formatter = logging.Formatter(f_str, datefmt='%H:%M:%S')
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(log_formatter)
+    logger.addHandler(console_handler)
+    # logging to file
+    # self.file_handler = logging.FileHandler(log_file)
+    # self.file_handler.setFormatter(self.log_formatter)
+    # self.logger.addHandler(self.file_handler)
     # create the GUI application
     app = QApplication(sys.argv)
     # instantiate the main window
