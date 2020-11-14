@@ -38,7 +38,6 @@ class TangoAttributeReadTimeout(TimeoutError):
 
 class TangoAttribute:
     devices = {}
-    attributes = {}
     reconnect_timeout = 3.0
 
     # def __new__(cls, name, *args, **kwargs):
@@ -46,7 +45,7 @@ class TangoAttribute:
     #         return TangoAttribute.attributes[name]
     #     return super(TangoAttribute, cls).__new__(cls)
 
-    def __init__(self, name: str, readonly=False, use_history=True):
+    def __init__(self, name: str, readonly=False, use_history=True, late_init=False):
         self.full_name = str(name)
         self.device_name, self.attribute_name = split_attribute_name(self.full_name)
         self.use_history = use_history
@@ -59,8 +58,6 @@ class TangoAttribute:
         self.readonly = readonly
         # configure logging
         self.logger = logging.getLogger('__main__')
-        # connect attribute
-        self.connect()
         self.time = time.time()
         # async operation vars
         self.read_id = None
@@ -74,7 +71,9 @@ class TangoAttribute:
         self.force_read = False
         self.sync_read = False
         self.sync_write = True
-        TangoAttribute.attributes[self.full_name] = self
+        # connect attribute
+        if not late_init:
+            self.connect()
 
     def connect(self):
         # if self.device_proxy is not None:
@@ -82,7 +81,7 @@ class TangoAttribute:
         try:
             self.device_proxy = self.create_device_proxy()
             self.set_config()
-            self.read_result = self.device_proxy.read_attribute(self.attribute_name)
+            # self.read_result = self.device_proxy.read_attribute(self.attribute_name)
             self.connected = True
             self.time = 0.0
             self.logger.info('Attribute %s has been connected', self.full_name)
@@ -151,7 +150,9 @@ class TangoAttribute:
             return True
 
     def is_valid(self):
-        return self.connected and self.read_result.quality == tango._tango.AttrQuality.ATTR_VALID
+        return self.connected and \
+        self.read_result is not None and \
+        self.read_result.quality == tango._tango.AttrQuality.ATTR_VALID
 
     def is_boolean(self):
         try:
@@ -368,7 +369,7 @@ class TangoAttribute:
         try:
             self.device_proxy = await self.async_create_device_proxy()
             if self.device_proxy is not None:
-                self.set_config()
+                await self.async_set_config()
                 self.connected = True
                 self.time = 0.0
                 self.logger.info('Attribute %s has been connected', self.full_name)
@@ -405,3 +406,14 @@ class TangoAttribute:
             TangoAttribute.devices[self.device_name] = dp
         self.device_proxy = dp
         return dp
+
+    async def async_set_config(self):
+        cfg = await self.device_proxy.get_attribute_config_ex(self.attribute_name)
+        self.config = cfg[0]
+        self.format = self.config.format
+        try:
+            self.coeff = float(self.config.display_unit)
+        except:
+            self.coeff = 1.0
+        self.readonly = self.readonly or self.is_readonly()
+

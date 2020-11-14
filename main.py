@@ -95,8 +95,7 @@ class MainWindow(QMainWindow):
         # restore global settings from default location
         self.restore_settings()
         # connect mouse button press event
-        self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.action)
-        # self.mplWidget.canvas.mpl_disconnect(cid)
+        # self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.action)
         # additional decorations
         # plt.style.use('ggplot')
         self.tableWidget.resizeColumnsToContents()
@@ -174,6 +173,7 @@ class MainWindow(QMainWindow):
                     tattr = TangoAttribute(name=name,
                                            use_history=attr['use_history'],
                                            readonly=True
+#                                           late_init=True
                                            )
                     self.attributes[name]['tango'] = tattr
                     if tattr.device_proxy is not None:
