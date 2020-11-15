@@ -358,7 +358,11 @@ class TangoAttribute:
         if self.device_name in TangoAttribute.devices and TangoAttribute.devices[self.device_name] is not self.device_proxy:
             self.logger.debug('Device proxy changed for %s' % self.full_name)
             self.device_proxy = TangoAttribute.devices[self.device_name]
-        await self.async_connect()
+        try:
+            await self.async_connect()
+        except:
+            self.logger.debug('Device %s reconnection exception' % self.full_name)
+
 
     async def async_connect(self):
         if self.device_proxy is not None:
@@ -387,6 +391,8 @@ class TangoAttribute:
             try:
                 # check if device is alive
                 pt = TangoAttribute.devices[self.device_name].ping()
+                if asyncio.isfuture(pt):
+                    pt = await pt
                 dp = TangoAttribute.devices[self.device_name]
                 self.logger.debug('Device %s for %s exists, ping=%dms' % (self.device_name, self.attribute_name, pt))
             except:
@@ -397,7 +403,7 @@ class TangoAttribute:
         if dp is None:
             try:
                 dp = await AsyncDeviceProxy(self.device_name)
-                dp.ping()
+                await dp.ping()
                 self.logger.info('Device proxy for %s has been created' % self.device_name)
             except:
                 self.logger.warning('Device %s creation exception' % self.device_name)
@@ -408,9 +414,14 @@ class TangoAttribute:
         return dp
 
     async def async_set_config(self):
-        cfg = await self.device_proxy.get_attribute_config_ex(self.attribute_name)
-        self.config = cfg[0]
-        self.format = self.config.format
+        try:
+            cfg = await self.device_proxy.get_attribute_config_ex(self.attribute_name)
+            self.config = cfg[0]
+            self.format = self.config.format
+        except:
+            self.logger.warning('Exception setting atribute config for %s', self.full_name)
+            self.config = None
+            self.format = None
         try:
             self.coeff = float(self.config.display_unit)
         except:
