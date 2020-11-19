@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QPushButton
-from PyQt5 import uic, QtGui, QtCore
+from PyQt5 import QtGui, QtCore, uic
 from PyQt5.QtCore import QPoint, QSize, Qt
 from PyQt5.QtCore import QTimer
 
@@ -268,6 +268,8 @@ class MainWindow(QMainWindow):
         if not self.pushButton.isChecked():
             return
         self.ai = 0
+        if len(self.axes) <= 0:
+            return
         axes = self.axes[self.ai]
         if self.plot_flag:
             axes.clear()
