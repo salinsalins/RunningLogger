@@ -144,6 +144,9 @@ class MainWindow(QMainWindow):
             with open(full_file_name, 'r', encoding='utf-8') as configfile:
                 s = configfile.read()
                 self.config = json.loads(s)
+            # set log level
+            if 'log_level' in self.config:
+                self.logger.setLevel(self.config['log_level'])
             # restore window size and position
             if 'main_window' in self.config:
                 self.resize(QSize(self.config['main_window']['size'][0], self.config['main_window']['size'][1]))

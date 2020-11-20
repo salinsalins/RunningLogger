@@ -341,7 +341,7 @@ class TangoAttribute:
                 # reply does not arrive, let asyncio loop run
                 await asyncio.sleep(0)
             except:
-                # catch all other exceptions and rise it
+                # catch all other exceptions and raise it
                 self.logger.warning('Attribute %s read exception %s', self.full_name, sys.exc_info()[0])
                 self.logger.debug('Exception:', exc_info=True)
                 self.read_id = None
@@ -367,10 +367,9 @@ class TangoAttribute:
     async def async_connect(self):
         if self.device_proxy is not None:
             gm =self.device_proxy.get_green_mode()
-            print(gm, gm == tango.GreenMode.Asyncio, tango.GreenMode.Asyncio)
             self.connected = True
             self.time = 0.0
-            # self.logger.debug('Already connected %s' % self.full_name)
+            self.logger.debug('Attribute %s already connected %s', self.full_name, gm)
             return
         try:
             self.device_proxy = await self.async_create_device_proxy()
