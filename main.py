@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import QTableWidgetItem
 from PyQt5.QtWidgets import QMessageBox
 from PyQt5.QtWidgets import QCheckBox
 from PyQt5.QtWidgets import QPushButton
-from PyQt5 import uic, QtGui, QtCore
+from PyQt5 import QtGui, QtCore, uic
 from PyQt5.QtCore import QPoint, QSize, Qt
 from PyQt5.QtCore import QTimer
 
@@ -95,8 +95,7 @@ class MainWindow(QMainWindow):
         # restore global settings from default location
         self.restore_settings()
         # connect mouse button press event
-        self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.action)
-        # self.mplWidget.canvas.mpl_disconnect(cid)
+        # self.cid = self.mplWidget.canvas.mpl_connect('button_press_event', self.action)
         # additional decorations
         # plt.style.use('ggplot')
         self.tableWidget.resizeColumnsToContents()
@@ -174,6 +173,7 @@ class MainWindow(QMainWindow):
                     tattr = TangoAttribute(name=name,
                                            use_history=attr['use_history'],
                                            readonly=True
+#                                           late_init=True
                                            )
                     self.attributes[name]['tango'] = tattr
                     if tattr.device_proxy is not None:
@@ -268,6 +268,8 @@ class MainWindow(QMainWindow):
         if not self.pushButton.isChecked():
             return
         self.ai = 0
+        if len(self.axes) <= 0:
+            return
         axes = self.axes[self.ai]
         if self.plot_flag:
             axes.clear()
