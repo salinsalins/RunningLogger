@@ -225,7 +225,7 @@ class MainWindow(QMainWindow):
             self.logger.info('Configuration restored from %s' % full_file_name)
             return True
         except:
-            self.logger.warning('Configuration restore error from %s' % full_file_name)
+            self.logger.warning('Error during configuration restore from %s' % full_file_name)
             self.print_exception_info()
             return False
 
