@@ -199,13 +199,13 @@ class MainWindow(QMainWindow):
                     self.attributes[name]['cb'] = pCheckbox
                     pCheckbox.setCheckState(QtCore.Qt.Checked)
                     table.setCellWidget(row, 0, pWidget)
-                    # status button
+                    # attribute status column
                     pb = QPushButton()
                     self.attributes[name]['status'] = pb
                     pb.setFixedWidth(25)
                     pb.setStyleSheet('background-color: rgb(0, 255, 0);')
                     table.setCellWidget(row, 1, pb)
-                    # color button
+                    # plot color column
                     pb = QPushButton()
                     self.attributes[name]['pb_color'] = pb
                     pb.setFixedWidth(25)
